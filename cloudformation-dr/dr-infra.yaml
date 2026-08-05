@@ -1,1 +1,228 @@
+AWSTemplateFormatVersion: '2010-09-09'
 
+Description: DR Infrastructure - Networking
+
+Resources:
+
+  ############################################
+  # VPC
+  ############################################
+
+  DRVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.50.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+      Tags:
+        - Key: Name
+          Value: DR-VPC
+
+  ############################################
+  # Internet Gateway
+  ############################################
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+    Properties:
+      Tags:
+        - Key: Name
+          Value: DR-IGW
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+
+    Properties:
+      VpcId: !Ref DRVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  ############################################
+  # Public Subnets
+  ############################################
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+
+    Properties:
+      VpcId: !Ref DRVPC
+      AvailabilityZone: ap-south-2a
+      CidrBlock: 10.50.1.0/24
+      MapPublicIpOnLaunch: true
+
+      Tags:
+        - Key: Name
+          Value: Public-Subnet-A
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+
+    Properties:
+      VpcId: !Ref DRVPC
+      AvailabilityZone: ap-south-2b
+      CidrBlock: 10.50.2.0/24
+      MapPublicIpOnLaunch: true
+
+      Tags:
+        - Key: Name
+          Value: Public-Subnet-B
+
+  ############################################
+  # Private Subnets
+  ############################################
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+
+    Properties:
+      VpcId: !Ref DRVPC
+      AvailabilityZone: ap-south-2a
+      CidrBlock: 10.50.11.0/24
+
+      Tags:
+        - Key: Name
+          Value: Private-Subnet-A
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+
+    Properties:
+      VpcId: !Ref DRVPC
+      AvailabilityZone: ap-south-2b
+      CidrBlock: 10.50.12.0/24
+
+      Tags:
+        - Key: Name
+          Value: Private-Subnet-B
+
+  ############################################
+  # Elastic IP
+  ############################################
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+
+    DependsOn: AttachGateway
+
+    Properties:
+      Domain: vpc
+
+  ############################################
+  # NAT Gateway
+  ############################################
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnetA
+
+      Tags:
+        - Key: Name
+          Value: DR-NAT
+
+  ############################################
+  # Public Route Table
+  ############################################
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+
+    Properties:
+      VpcId: !Ref DRVPC
+
+      Tags:
+        - Key: Name
+          Value: Public-RT
+
+  PublicRoute:
+
+    Type: AWS::EC2::Route
+
+    DependsOn: AttachGateway
+
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  ############################################
+  # Private Route Table
+  ############################################
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+
+    Properties:
+      VpcId: !Ref DRVPC
+
+      Tags:
+        - Key: Name
+          Value: Private-RT
+
+  PrivateRoute:
+
+    Type: AWS::EC2::Route
+
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  ############################################
+  # Route Associations
+  ############################################
+
+  PublicSubnetAAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicSubnetBAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  PrivateSubnetAAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetA
+
+  PrivateSubnetBAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnetB
+
+############################################
+# Outputs
+############################################
+
+Outputs:
+
+  VPCId:
+    Value: !Ref DRVPC
+
+  PublicSubnetA:
+    Value: !Ref PublicSubnetA
+
+  PublicSubnetB:
+    Value: !Ref PublicSubnetB
+
+  PrivateSubnetA:
+    Value: !Ref PrivateSubnetA
+
+  PrivateSubnetB:
+    Value: !Ref PrivateSubnetB
+
+  NatGateway:
+    Value: !Ref NatGateway

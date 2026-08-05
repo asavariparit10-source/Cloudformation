@@ -42,59 +42,39 @@ Resources:
   # Public Subnets
   ############################################
 
-  PublicSubnetA:
-    Type: AWS::EC2::Subnet
+ PublicSubnetA:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref DRVPC
+    AvailabilityZone: ap-south-1a
+    CidrBlock: 10.50.1.0/24
+    MapPublicIpOnLaunch: true
 
-    Properties:
-      VpcId: !Ref DRVPC
-      AvailabilityZone: ap-south-2a
-      CidrBlock: 10.50.1.0/24
-      MapPublicIpOnLaunch: true
-
-      Tags:
-        - Key: Name
-          Value: Public-Subnet-A
-
-  PublicSubnetB:
-    Type: AWS::EC2::Subnet
-
-    Properties:
-      VpcId: !Ref DRVPC
-      AvailabilityZone: ap-south-2b
-      CidrBlock: 10.50.2.0/24
-      MapPublicIpOnLaunch: true
-
-      Tags:
-        - Key: Name
-          Value: Public-Subnet-B
+PublicSubnetB:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref DRVPC
+    AvailabilityZone: ap-south-1b
+    CidrBlock: 10.50.2.0/24
+    MapPublicIpOnLaunch: true
 
   ############################################
   # Private Subnets
   ############################################
 
   PrivateSubnetA:
-    Type: AWS::EC2::Subnet
-
-    Properties:
-      VpcId: !Ref DRVPC
-      AvailabilityZone: ap-south-2a
-      CidrBlock: 10.50.11.0/24
-
-      Tags:
-        - Key: Name
-          Value: Private-Subnet-A
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref DRVPC
+    AvailabilityZone: ap-south-1a
+    CidrBlock: 10.50.11.0/24
 
   PrivateSubnetB:
-    Type: AWS::EC2::Subnet
-
-    Properties:
-      VpcId: !Ref DRVPC
-      AvailabilityZone: ap-south-2b
-      CidrBlock: 10.50.12.0/24
-
-      Tags:
-        - Key: Name
-          Value: Private-Subnet-B
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref DRVPC
+    AvailabilityZone: ap-south-1b
+    CidrBlock: 10.50.12.0/24
 
   ############################################
   # Elastic IP
